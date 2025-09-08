@@ -52,6 +52,11 @@ func (c *Client) List(ctx context.Context, owner, repo string, opts repository.L
 		query += fmt.Sprintf(" created:>=%s", opts.Since.Format("2006-01-02"))
 	}
 	
+	// Add until date filter
+	if opts.Until != nil {
+		query += fmt.Sprintf(" created:<=%s", opts.Until.Format("2006-01-02"))
+	}
+	
 	searchOpts := &github.SearchOptions{
 		Sort:  opts.Sort,
 		Order: opts.Direction,
@@ -70,6 +75,9 @@ func (c *Client) List(ctx context.Context, owner, repo string, opts repository.L
 	}
 	if opts.Since != nil {
 		logAttrs = append(logAttrs, slog.Time("since", *opts.Since))
+	}
+	if opts.Until != nil {
+		logAttrs = append(logAttrs, slog.Time("until", *opts.Until))
 	}
 	c.logger.Info("Searching pull requests", logAttrs...)
 
@@ -91,7 +99,15 @@ func (c *Client) List(ctx context.Context, owner, repo string, opts repository.L
 	)
 
 	result := make([]*entity.PullRequest, 0, len(searchResult.Issues))
-	for _, issue := range searchResult.Issues {
+	totalIssues := len(searchResult.Issues)
+	
+	for i, issue := range searchResult.Issues {
+		// Display progress
+		c.logger.Info("Processing pull request",
+			slog.String("progress", fmt.Sprintf("%d/%d", i+1, totalIssues)),
+			slog.Int("number", *issue.Number),
+		)
+		
 		// Get full PR details
 		pr, _, err := c.client.PullRequests.Get(ctx, owner, repo, *issue.Number)
 		if err != nil {

@@ -24,6 +24,7 @@ type MeasureOptions struct {
 	Repo  string
 	State string
 	Since *time.Time
+	Until *time.Time
 }
 
 
@@ -35,6 +36,7 @@ func (u *MeasureReviewTimeUseCase) Execute(ctx context.Context, opts MeasureOpti
 		Sort:      "created",
 		Direction: "desc",
 		Since:     opts.Since,
+		Until:     opts.Until,
 		PerPage:   100,
 		Page:      1,
 	}

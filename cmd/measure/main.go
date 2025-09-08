@@ -19,6 +19,7 @@ func main() {
 		owner  = flag.String("owner", "", "Repository owner (required)")
 		repo   = flag.String("repo", "", "Repository name (required)")
 		since  = flag.String("since", "", "Only PRs created after this date (YYYY-MM-DD)")
+		until  = flag.String("until", "", "Only PRs created before this date (YYYY-MM-DD)")
 		format = flag.String("format", "table", "Output format (table, json, csv)")
 		debug  = flag.Bool("debug", false, "Enable debug logging")
 	)
@@ -69,10 +70,19 @@ func main() {
 	if *since != "" {
 		t, err := time.Parse("2006-01-02", *since)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: Invalid date format. Use YYYY-MM-DD\n")
+			fmt.Fprintf(os.Stderr, "Error: Invalid since date format. Use YYYY-MM-DD\n")
 			os.Exit(1)
 		}
 		opts.Since = &t
+	}
+
+	if *until != "" {
+		t, err := time.Parse("2006-01-02", *until)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: Invalid until date format. Use YYYY-MM-DD\n")
+			os.Exit(1)
+		}
+		opts.Until = &t
 	}
 
 	metrics, err := measureUseCase.Execute(ctx, opts)

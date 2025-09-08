@@ -17,6 +17,7 @@ type ListOptions struct {
 	Sort      string
 	Direction string
 	Since     *time.Time
+	Until     *time.Time
 	PerPage   int
 	Page      int
 }

@@ -26,6 +26,7 @@ go run cmd/measure/main.go -owner owner_name -repo repo_name
 - `-owner, -o`: リポジトリオーナー（必須）
 - `-repo, -r`: リポジトリ名（必須）
 - `-since`: この日付以降のPRのみ分析 (YYYY-MM-DD)
+- `-until`: この日付以前のPRのみ分析 (YYYY-MM-DD)
 - `-format, -f`: 出力形式 (table, json, csv) デフォルト: table
 - `-debug`: デバッグログを有効化
 
@@ -43,6 +44,9 @@ go run cmd/measure/main.go -o facebook -r react
 
 # 2024年以降のPRをCSV形式で出力
 go run cmd/measure/main.go -o facebook -r react -since 2024-01-01 -f csv
+
+# 2024年1月のPRのみ分析
+go run cmd/measure/main.go -o facebook -r react -since 2024-01-01 -until 2024-01-31
 
 # JSON形式で出力
 go run cmd/measure/main.go -o facebook -r react -f json
