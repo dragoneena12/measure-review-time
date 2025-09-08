@@ -1,0 +1,8 @@
+.claude/
+
+# Build output
+dist/
+build/
+measure-review-time
+
+*.csv
