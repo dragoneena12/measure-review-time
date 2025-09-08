@@ -27,7 +27,6 @@ type MeasureOptions struct {
 	Until *time.Time
 }
 
-
 func (u *MeasureReviewTimeUseCase) Execute(ctx context.Context, opts MeasureOptions) ([]*entity.ReviewMetrics, error) {
 	metrics := make([]*entity.ReviewMetrics, 0)
 
@@ -38,7 +37,6 @@ func (u *MeasureReviewTimeUseCase) Execute(ctx context.Context, opts MeasureOpti
 		Since:     opts.Since,
 		Until:     opts.Until,
 		PerPage:   100,
-		Page:      1,
 	}
 
 	prs, err := u.prRepo.List(ctx, opts.Owner, opts.Repo, listOpts)

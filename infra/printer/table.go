@@ -47,12 +47,12 @@ func (p *TablePrinter) Print(owner, repo string, metrics []*entity.ReviewMetrics
 
 		timeToReview := "N/A"
 		if metric.TimeToReview != nil {
-			timeToReview = formatDuration(*metric.TimeToReview)
+			timeToReview = fmt.Sprintf("%d min", formatDuration(*metric.TimeToReview))
 		}
 
 		timeToApprove := "N/A"
 		if metric.TimeToApprove != nil {
-			timeToApprove = formatDuration(*metric.TimeToApprove)
+			timeToApprove = fmt.Sprintf("%d min", formatDuration(*metric.TimeToApprove))
 		}
 
 		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%s\n",

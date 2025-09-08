@@ -19,5 +19,4 @@ type ListOptions struct {
 	Since     *time.Time
 	Until     *time.Time
 	PerPage   int
-	Page      int
 }

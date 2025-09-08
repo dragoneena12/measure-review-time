@@ -63,15 +63,15 @@ go run cmd/measure/main.go -o facebook -r react -debug
 
 PR #  Author      Created              Time to Review  Time to Approve  Title
 ----  ------      -------              --------------  ---------------  -----
-12345  john_doe   2024-01-15 10:30    1d 2h           2d 5h            Fix memory leak in useEffect
-12344  jane_smith 2024-01-14 14:20    3h 45m          1d 3h            Add new feature for concurrent rendering
+12345  john_doe   2024-01-15 10:30    1560 min        3180 min         Fix memory leak in useEffect
+12344  jane_smith 2024-01-14 14:20    225 min         1620 min         Add new feature for concurrent rendering
 ```
 
 ### CSV形式
 ```csv
-PR_Number,Title,Author,Created_At,Time_To_Review,Time_To_Approve
-12345,"Fix memory leak in useEffect",john_doe,2024-01-15 10:30:00,1d 2h,2d 5h
-12344,"Add new feature for concurrent rendering",jane_smith,2024-01-14 14:20:00,3h 45m,1d 3h
+PR_Number,Title,Author,Created_At,Time_To_Review_Minutes,Time_To_Approve_Minutes
+12345,"Fix memory leak in useEffect",john_doe,2024-01-15 10:30:00,1560,3180
+12344,"Add new feature for concurrent rendering",jane_smith,2024-01-14 14:20:00,225,1620
 ```
 
 ### JSON形式
@@ -84,16 +84,16 @@ PR_Number,Title,Author,Created_At,Time_To_Review,Time_To_Approve
       "title": "Fix memory leak in useEffect",
       "author": "john_doe",
       "created_at": "2024-01-15T10:30:00Z",
-      "time_to_review": "1d 2h",
-      "time_to_approve": "2d 5h"
+      "time_to_review_minutes": 1560,
+      "time_to_approve_minutes": 3180
     },
     {
       "number": 12344,
       "title": "Add new feature for concurrent rendering",
       "author": "jane_smith",
       "created_at": "2024-01-14T14:20:00Z",
-      "time_to_review": "3h 45m",
-      "time_to_approve": "1d 3h"
+      "time_to_review_minutes": 225,
+      "time_to_approve_minutes": 1620
     }
   ]
 }

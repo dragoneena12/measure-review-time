@@ -47,61 +47,91 @@ func (c *Client) List(ctx context.Context, owner, repo string, opts repository.L
 		}
 	}
 	
-	// Add since date filter
-	if opts.Since != nil {
+	// Add date filters
+	if opts.Since != nil && opts.Until != nil {
+		// When both are specified, use range syntax
+		query += fmt.Sprintf(" created:%s..%s", opts.Since.Format("2006-01-02"), opts.Until.Format("2006-01-02"))
+	} else if opts.Since != nil {
+		// Only since is specified
 		query += fmt.Sprintf(" created:>=%s", opts.Since.Format("2006-01-02"))
-	}
-	
-	// Add until date filter
-	if opts.Until != nil {
+	} else if opts.Until != nil {
+		// Only until is specified
 		query += fmt.Sprintf(" created:<=%s", opts.Until.Format("2006-01-02"))
 	}
 	
-	searchOpts := &github.SearchOptions{
-		Sort:  opts.Sort,
-		Order: opts.Direction,
-		ListOptions: github.ListOptions{
-			PerPage: opts.PerPage,
-			Page:    opts.Page,
-		},
+	// Initialize result collection
+	var allIssues []*github.Issue
+	page := 1
+	perPage := opts.PerPage
+	if perPage == 0 {
+		perPage = 100 // Default per page
 	}
+	
+	// Fetch all pages
+	for {
+		searchOpts := &github.SearchOptions{
+			Sort:  opts.Sort,
+			Order: opts.Direction,
+			ListOptions: github.ListOptions{
+				PerPage: perPage,
+				Page:    page,
+			},
+		}
 
-	logAttrs := []any{
-		slog.String("owner", owner),
-		slog.String("repo", repo),
-		slog.String("query", query),
-		slog.Int("page", opts.Page),
-		slog.Int("per_page", opts.PerPage),
-	}
-	if opts.Since != nil {
-		logAttrs = append(logAttrs, slog.Time("since", *opts.Since))
-	}
-	if opts.Until != nil {
-		logAttrs = append(logAttrs, slog.Time("until", *opts.Until))
-	}
-	c.logger.Info("Searching pull requests", logAttrs...)
-
-	searchResult, _, err := c.client.Search.Issues(ctx, query, searchOpts)
-	if err != nil {
-		c.logger.Error("Failed to search pull requests",
+		logAttrs := []any{
 			slog.String("owner", owner),
 			slog.String("repo", repo),
 			slog.String("query", query),
-			slog.String("error", err.Error()),
+			slog.Int("page", page),
+			slog.Int("per_page", perPage),
+		}
+		if opts.Since != nil {
+			logAttrs = append(logAttrs, slog.Time("since", *opts.Since))
+		}
+		if opts.Until != nil {
+			logAttrs = append(logAttrs, slog.Time("until", *opts.Until))
+		}
+		c.logger.Info("Searching pull requests", logAttrs...)
+
+		searchResult, resp, err := c.client.Search.Issues(ctx, query, searchOpts)
+		if err != nil {
+			c.logger.Error("Failed to search pull requests",
+				slog.String("owner", owner),
+				slog.String("repo", repo),
+				slog.String("query", query),
+				slog.Int("page", page),
+				slog.String("error", err.Error()),
+			)
+			return nil, err
+		}
+
+		c.logger.Info("Successfully searched pull requests page",
+			slog.String("owner", owner),
+			slog.String("repo", repo),
+			slog.Int("page", page),
+			slog.Int("count", len(searchResult.Issues)),
+			slog.Int("total_count", *searchResult.Total),
 		)
-		return nil, err
+
+		allIssues = append(allIssues, searchResult.Issues...)
+		
+		// Check if there are more pages
+		if resp.NextPage == 0 {
+			break
+		}
+		page = resp.NextPage
 	}
 
-	c.logger.Info("Successfully searched pull requests",
+	c.logger.Info("Fetched all pull requests",
 		slog.String("owner", owner),
 		slog.String("repo", repo),
-		slog.Int("count", len(searchResult.Issues)),
+		slog.Int("total_issues", len(allIssues)),
 	)
 
-	result := make([]*entity.PullRequest, 0, len(searchResult.Issues))
-	totalIssues := len(searchResult.Issues)
+	result := make([]*entity.PullRequest, 0, len(allIssues))
+	totalIssues := len(allIssues)
 	
-	for i, issue := range searchResult.Issues {
+	for i, issue := range allIssues {
 		// Display progress
 		c.logger.Info("Processing pull request",
 			slog.String("progress", fmt.Sprintf("%d/%d", i+1, totalIssues)),
@@ -283,14 +313,38 @@ func (c *Client) getFirstReviewRequestTime(ctx context.Context, owner, repo stri
 		slog.Int("number", number),
 	)
 
-	// Get timeline events to find review requests
-	events, _, err := c.client.Issues.ListIssueTimeline(ctx, owner, repo, number, nil)
-	if err != nil {
-		return nil, err
+	var allEvents []*github.Timeline
+	page := 1
+	
+	// Fetch all timeline events (handling pagination)
+	for {
+		opts := &github.ListOptions{
+			Page:    page,
+			PerPage: 100,
+		}
+		
+		events, resp, err := c.client.Issues.ListIssueTimeline(ctx, owner, repo, number, opts)
+		if err != nil {
+			return nil, err
+		}
+		
+		allEvents = append(allEvents, events...)
+		
+		if resp.NextPage == 0 {
+			break
+		}
+		page = resp.NextPage
 	}
 
+	c.logger.Debug("Fetched timeline events",
+		slog.String("owner", owner),
+		slog.String("repo", repo),
+		slog.Int("number", number),
+		slog.Int("event_count", len(allEvents)),
+	)
+
 	var firstReviewRequestTime *time.Time
-	for _, event := range events {
+	for _, event := range allEvents {
 		// Check for review_requested event
 		if event.Event != nil && *event.Event == "review_requested" {
 			if event.CreatedAt != nil {
@@ -313,6 +367,7 @@ func (c *Client) getFirstReviewRequestTime(ctx context.Context, owner, repo stri
 			slog.String("owner", owner),
 			slog.String("repo", repo),
 			slog.Int("number", number),
+			slog.Int("total_events", len(allEvents)),
 		)
 	}
 

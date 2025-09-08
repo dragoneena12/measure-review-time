@@ -43,10 +43,10 @@ func (p *JSONPrinter) Print(owner, repo string, metrics []*entity.ReviewMetrics)
 		}
 
 		if metric.TimeToReview != nil {
-			prMap["time_to_review"] = formatDuration(*metric.TimeToReview)
+			prMap["time_to_review_minutes"] = formatDuration(*metric.TimeToReview)
 		}
 		if metric.TimeToApprove != nil {
-			prMap["time_to_approve"] = formatDuration(*metric.TimeToApprove)
+			prMap["time_to_approve_minutes"] = formatDuration(*metric.TimeToApprove)
 		}
 
 		pullRequests = append(pullRequests, prMap)

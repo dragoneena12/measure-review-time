@@ -21,19 +21,19 @@ func NewCSVPrinter() repository.Printer {
 }
 
 func (p *CSVPrinter) Print(owner, repo string, metrics []*entity.ReviewMetrics) error {
-	fmt.Fprintln(p.writer, "PR_Number,Title,Author,Created_At,Time_To_Review,Time_To_Approve")
+	fmt.Fprintln(p.writer, "PR_Number,Title,Author,Created_At,Time_To_Review_Minutes,Time_To_Approve_Minutes")
 
 	for _, metric := range metrics {
 		pr := metric.PullRequest
 
 		timeToReview := ""
 		if metric.TimeToReview != nil {
-			timeToReview = formatDuration(*metric.TimeToReview)
+			timeToReview = fmt.Sprintf("%d", formatDuration(*metric.TimeToReview))
 		}
 
 		timeToApprove := ""
 		if metric.TimeToApprove != nil {
-			timeToApprove = formatDuration(*metric.TimeToApprove)
+			timeToApprove = fmt.Sprintf("%d", formatDuration(*metric.TimeToApprove))
 		}
 
 		title := strings.ReplaceAll(pr.Title, ",", ";")
